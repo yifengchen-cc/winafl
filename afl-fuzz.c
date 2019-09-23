@@ -114,7 +114,6 @@ static u8  skip_deterministic,        /* Skip deterministic stages?       */
            use_intelpt = 0;           /* Running without DRIO?            */
            custom_dll_defined = 0;    /* Custom DLL path defined ?        */
            persist_dr_cache = 0;      /* Custom DLL path defined ?        */
-		   follow_children = 0 ;	  /* drrun follow_children enabled?   */
 
 static s32 out_fd,                    /* Persistent fd for out_file       */
            dev_urandom_fd = -1,       /* Persistent fd for /dev/urandom   */
@@ -2296,27 +2295,13 @@ static void create_target_process(char** argv) {
   } else {
     pidfile = alloc_printf("childpid_%s.txt", fuzzer_id);
 	if (persist_dr_cache) {
-		if(follow_children){
-			cmd = alloc_printf(
-				"%s\\drrun.exe -pidfile %s -persist -persist_dir \"%s\\drcache\" -c winafl.dll %s -fuzzer_id %s -drpersist -- %s",
-				dynamorio_dir, pidfile, out_dir, client_params, fuzzer_id, target_cmd);
-		}
-		else{
-			cmd = alloc_printf(
-				"%s\\drrun.exe -pidfile %s -no_follow_children -persist -persist_dir \"%s\\drcache\" -c winafl.dll %s -fuzzer_id %s -drpersist -- %s",
-				dynamorio_dir, pidfile, out_dir, client_params, fuzzer_id, target_cmd);
-		}
+		cmd = alloc_printf(
+			"%s\\drrun.exe -pidfile %s -no_follow_children -persist -persist_dir \"%s\\drcache\" -c winafl.dll %s -fuzzer_id %s -drpersist -- %s",
+			dynamorio_dir, pidfile, out_dir, client_params, fuzzer_id, target_cmd);
 	} else {
-		if(follow_children){
-			cmd = alloc_printf(
-				"%s\\drrun.exe -pidfile %s -c winafl.dll %s -fuzzer_id %s -- %s",
-				dynamorio_dir, pidfile, client_params, fuzzer_id, target_cmd);
-		}
-		else{
-			cmd = alloc_printf(
-				"%s\\drrun.exe -pidfile %s -no_follow_children -c winafl.dll %s -fuzzer_id %s -- %s",
-				dynamorio_dir, pidfile, client_params, fuzzer_id, target_cmd);
-		}
+		cmd = alloc_printf(
+			"%s\\drrun.exe -pidfile %s -no_follow_children -c winafl.dll %s -fuzzer_id %s -- %s",
+			dynamorio_dir, pidfile, client_params, fuzzer_id, target_cmd);
 	}
   }
   if(mem_limit || cpu_aff) {
@@ -7089,7 +7074,6 @@ static void usage(u8* argv0) {
        "  -T text       - text banner to show on the screen\n"
        "  -M \\ -S id    - distributed mode (see parallel_fuzzing.txt)\n"
        "  -l path       - a path to user-defined DLL for custom test cases processing\n\n"
-       "  -F 			- set drrun follow children process\n"
 
        "For additional tips, please consult %s\\README.\n\n",
 
@@ -7753,7 +7737,7 @@ int main(int argc, char** argv) {
   dynamorio_dir = NULL;
   client_params = NULL;
 
-  while ((opt = getopt(argc, argv, "+i:o:f:m:t:I:T:dYnCB:S:M:x:QD:b:l:pPc:F")) > 0)
+  while ((opt = getopt(argc, argv, "+i:o:f:m:t:I:T:dYnCB:S:M:x:QD:b:l:pPc:")) > 0)
 
     switch (opt) {
       case 'i':
@@ -7972,9 +7956,6 @@ int main(int argc, char** argv) {
         }
 
         break;
-	  case 'F':/*allow drrun.exe follow child process*/
-	  	follow_children =1 ;
-		break;
 
       default:
 
